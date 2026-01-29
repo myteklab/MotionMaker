@@ -1,0 +1,1353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>MotionMaker</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
+    <script src="libs/gif.js/gif.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #e0e0e0;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-width: 1800px;
+            margin: 0 auto;
+        }
+
+        /* Top Toolbar */
+        .toolbar {
+            background: rgba(30, 30, 50, 0.95);
+            padding: 12px 20px;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+            border-bottom: 2px solid #6c5ce7;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+
+        .toolbar-section {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            padding: 0 12px;
+            border-right: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .toolbar-section:last-child {
+            border-right: none;
+            margin-left: auto;
+        }
+
+        .btn {
+            background: #6c5ce7;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn:hover {
+            background: #5f4dd1;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(108, 92, 231, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn.secondary {
+            background: #34495e;
+        }
+
+        .btn.secondary:hover {
+            background: #2c3e50;
+        }
+
+        .btn.danger {
+            background: #e74c3c;
+        }
+
+        .btn.danger:hover {
+            background: #c0392b;
+        }
+
+        .btn.success {
+            background: #27ae60;
+        }
+
+        .btn.success:hover {
+            background: #229954;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn.small {
+            padding: 4px 8px;
+            font-size: 12px;
+        }
+
+        input[type="text"], input[type="number"], select {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: #e0e0e0;
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+
+        input[type="text"]:focus, input[type="number"]:focus, select:focus {
+            outline: none;
+            border-color: #6c5ce7;
+            background: rgba(255,255,255,0.15);
+        }
+
+        select option {
+            background: #1e1e32;
+            color: #e0e0e0;
+        }
+
+        label {
+            font-size: 12px;
+            color: #b0b0b0;
+            font-weight: 500;
+        }
+
+        /* Main Content Area */
+        .content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* Canvas Area */
+        .canvas-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #2c3e50;
+            position: relative;
+            padding: 20px;
+            overflow: auto; /* Allow scrolling when canvas is larger than viewport */
+        }
+
+        #p5-canvas canvas {
+            width: 800px !important;
+            height: 600px !important;
+            border-radius: 8px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+            cursor: crosshair;
+            display: block;
+        }
+
+        /* Properties Panel */
+        .properties-panel {
+            width: 300px;
+            min-width: 250px;
+            max-width: 600px;
+            background: rgba(30, 30, 50, 0.95);
+            padding: 20px;
+            overflow-y: auto;
+            border-left: 2px solid #6c5ce7;
+            position: relative;
+        }
+
+        /* Resize Handle for Properties Panel (vertical drag handle) */
+        .panel-resize-handle {
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 6px;
+            cursor: ew-resize;
+            background: transparent;
+            z-index: 10;
+            transition: background 0.2s;
+        }
+
+        .panel-resize-handle:hover {
+            background: rgba(108, 92, 231, 0.3);
+        }
+
+        .panel-resize-handle.resizing {
+            background: rgba(108, 92, 231, 0.5);
+        }
+
+        .property-group {
+            margin-bottom: 24px;
+        }
+
+        .property-group h3 {
+            font-size: 14px;
+            margin-bottom: 12px;
+            color: #6c5ce7;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .property-row {
+            margin-bottom: 12px;
+        }
+
+        .property-row label {
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .property-row input, .property-row select {
+            width: 100%;
+        }
+
+        /* Layers List */
+        .layers-list {
+            max-height: 200px;
+            overflow-y: auto;
+            background: rgba(0,0,0,0.2);
+            border-radius: 6px;
+            padding: 8px;
+        }
+
+        .layer-item {
+            background: rgba(255,255,255,0.05);
+            padding: 10px;
+            margin-bottom: 6px;
+            border-radius: 4px;
+            cursor: move;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 2px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .layer-item:active {
+            cursor: move;
+        }
+
+        .layer-item:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        .layer-item.selected {
+            border-color: #6c5ce7;
+            background: rgba(108, 92, 231, 0.2);
+        }
+
+        .layer-item.dragging {
+            opacity: 0.5;
+            transform: scale(0.95);
+        }
+
+        .layer-item.drag-over {
+            border-top: 3px solid #6c5ce7;
+        }
+
+        .layer-name-container {
+            display: flex;
+            align-items: center;
+            flex: 1;
+            gap: 4px;
+            margin: 0 8px;
+        }
+
+        .layer-item .layer-name {
+            font-size: 13px;
+            flex: 1;
+            color: #e0e0e0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .layer-rename-btn {
+            background: transparent;
+            border: none;
+            padding: 2px 4px;
+            cursor: pointer;
+            font-size: 12px;
+            opacity: 0.5;
+            transition: opacity 0.2s;
+            flex-shrink: 0;
+        }
+
+        .layer-rename-btn:hover {
+            opacity: 1;
+            transform: scale(1.1);
+        }
+
+        .layer-item:hover .layer-rename-btn {
+            opacity: 0.8;
+        }
+
+        .layer-name-input {
+            font-size: 13px;
+            flex: 1;
+            margin: 0 8px;
+            padding: 2px 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid #6c5ce7;
+            border-radius: 3px;
+            color: #e0e0e0;
+            outline: none;
+            width: 0; /* Let flex: 1 control the width */
+            min-width: 0; /* Allow flex to shrink below content size */
+            box-sizing: border-box;
+        }
+
+        .layer-name-input:focus {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: #a29bfe;
+        }
+
+        .layer-item .layer-actions {
+            display: flex;
+            gap: 4px;
+        }
+
+        .layer-visibility {
+            cursor: pointer;
+            font-size: 16px;
+            transition: opacity 0.2s;
+            margin-right: 6px;
+            flex-shrink: 0;
+        }
+
+        .layer-visibility:hover {
+            opacity: 0.7;
+        }
+
+        /* Timeline */
+        .timeline-container {
+            background: rgba(30, 30, 50, 0.95);
+            border-top: 2px solid #6c5ce7;
+            padding: 16px 20px;
+            height: 180px;
+            min-height: 150px;
+            max-height: 500px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            user-select: none; /* Prevent text selection in timeline */
+            position: relative;
+        }
+
+        /* Resize Handle for Timeline (horizontal drag handle) */
+        .timeline-resize-handle {
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 0;
+            height: 6px;
+            cursor: ns-resize;
+            background: transparent;
+            z-index: 10;
+            transition: background 0.2s;
+        }
+
+        .timeline-resize-handle:hover {
+            background: rgba(108, 92, 231, 0.3);
+        }
+
+        .timeline-resize-handle.resizing {
+            background: rgba(108, 92, 231, 0.5);
+        }
+
+        .timeline-controls {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .timeline-track {
+            flex: 1;
+            position: relative;
+            background: rgba(0,0,0,0.3);
+            border-radius: 0px; /* Remove border-radius - it can clip overflow content */
+            height: 60px;
+            cursor: pointer;
+            border: 1px solid rgba(255,255,255,0.1);
+            overflow: visible;
+        }
+
+        .timeline-grid {
+            position: absolute;
+            top: 0;
+            left: 120px;
+            right: 10px;
+            bottom: 0;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .timeline-grid-line {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 1px;
+            background: rgba(255,255,255,0.05);
+        }
+
+        .timeline-grid-line.major {
+            background: rgba(255,255,255,0.25);
+            width: 2px;
+        }
+
+        .timeline-ruler {
+            position: absolute;
+            top: 0;
+            left: 120px;
+            right: 10px;
+            height: 20px;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 2px;
+            font-size: 13px; /* Increased from 11px for better readability */
+            color: #b0b0b0;
+            font-weight: 500;
+            z-index: 2;
+        }
+
+        .timeline-ruler span {
+            flex-shrink: 0;
+            white-space: nowrap;
+        }
+
+        /* Background Keyframes Track */
+        .background-keyframes-track {
+            position: absolute;
+            top: 25px;
+            left: 120px;
+            right: 10px;
+            height: 24px;
+            z-index: 6;
+            background: rgba(0, 0, 0, 0.2);
+            border-bottom: 1px solid rgba(108, 92, 231, 0.3);
+            overflow: visible; /* Allow keyframes to overflow left edge */
+        }
+
+        .bg-track-label {
+            position: absolute;
+            left: -110px;
+            top: 4px;
+            font-size: 11px;
+            color: #b0b0b0;
+            font-weight: 500;
+            width: 100px;
+            text-align: right;
+            padding-right: 8px;
+        }
+
+        .bg-keyframe {
+            position: absolute;
+            top: 4px;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            border: 2px solid #fff;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            z-index: 7;
+            margin-left: -8px; /* Center on the position (half of width) */
+        }
+
+        .bg-keyframe:hover {
+            transform: scale(1.3);
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+        }
+
+        .bg-keyframe.selected {
+            border-color: #ffd700;
+            box-shadow: 0 0 12px rgba(255, 215, 0, 0.8);
+            transform: scale(1.4);
+        }
+
+        /* Timeline layer labels column */
+        .timeline-labels {
+            position: absolute;
+            left: 10px;
+            top: 49px;
+            bottom: 0;
+            width: 100px;
+            z-index: 6;
+            pointer-events: auto; /* Enable clicking on labels */
+            overflow-y: auto; /* Allow scrolling to sync with keyframes */
+            overflow-x: hidden; /* Hide horizontal scrollbar */
+        }
+
+        /* Hide scrollbar for timeline labels but keep functionality */
+        .timeline-labels::-webkit-scrollbar {
+            width: 0;
+            display: none;
+        }
+
+        .timeline-label {
+            position: absolute;
+            width: 100%;
+            height: 20px;
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.6);
+            text-align: right;
+            padding-right: 8px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            transition: color 0.2s, background-color 0.2s;
+        }
+
+        .timeline-label:hover {
+            color: rgba(108, 92, 231, 0.8);
+            background: rgba(108, 92, 231, 0.1);
+        }
+
+        .timeline-label.selected {
+            color: rgba(108, 92, 231, 1);
+            font-weight: 600;
+        }
+
+        .timeline-keyframes {
+            position: absolute;
+            top: 49px;
+            left: 113px; /* 7px further left to give space for margin */
+            right: 10px;
+            bottom: 0;
+            z-index: 8;
+            overflow-y: auto;
+            overflow-x: clip; /* Prevent horizontal scroll but allow content positioning */
+        }
+
+        /* Make sure scrollable area doesn't clip left-side labels */
+        .timeline-keyframes::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .timeline-keyframes.single-layer {
+            height: 30px;
+            overflow-y: hidden; /* No scroll needed for single layer */
+        }
+
+        /* Scrollbar styling for timeline */
+        .timeline-keyframes::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .timeline-keyframes::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+        }
+
+        .timeline-keyframes::-webkit-scrollbar-thumb {
+            background: rgba(108, 92, 231, 0.5);
+            border-radius: 4px;
+        }
+
+        .timeline-keyframes::-webkit-scrollbar-thumb:hover {
+            background: rgba(108, 92, 231, 0.8);
+        }
+
+        .keyframe-row {
+            position: relative;
+            height: 20px;
+            margin-bottom: 2px;
+            padding: 4px 0;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+            overflow: visible; /* Allow keyframes to overflow left edge */
+        }
+
+        .keyframe-row.selected {
+            background: rgba(108, 92, 231, 0.15);
+            box-shadow: inset 0 0 0 1px rgba(108, 92, 231, 0.3);
+        }
+
+        .keyframe-row-label {
+            position: absolute;
+            left: -110px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.6);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            width: 100px;
+            text-align: right;
+            padding-right: 8px;
+            pointer-events: none;
+        }
+
+        .keyframe-row.selected .keyframe-row-label {
+            color: rgba(108, 92, 231, 1);
+            font-weight: 600;
+        }
+
+        .keyframe {
+            position: absolute;
+            top: 3px;
+            width: 14px;
+            height: 14px;
+            background: #6c5ce7;
+            border: 2px solid #fff;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            z-index: 10;
+            margin-left: 0px; /* No margin - position at left edge, container provides offset */
+        }
+
+        .keyframe:hover {
+            transform: scale(1.4);
+            box-shadow: 0 0 16px #6c5ce7;
+        }
+
+        .keyframe.selected {
+            background: #e74c3c;
+            border-color: #fff;
+            box-shadow: 0 0 16px #e74c3c;
+            transform: scale(1.2);
+        }
+
+        .keyframe.dragging {
+            transform: scale(2);
+            box-shadow: 0 0 32px rgba(255, 193, 7, 1), 0 0 16px rgba(255, 193, 7, 0.8);
+            cursor: grabbing !important;
+            z-index: 100;
+            transition: none; /* Disable transition during drag for smooth movement */
+            background: #ffc107 !important; /* Bright yellow/orange to stand out */
+            border-color: #fff !important;
+            border-width: 3px !important;
+            animation: keyframe-pulse 0.5s ease-in-out infinite alternate;
+        }
+
+        @keyframes keyframe-pulse {
+            0% {
+                box-shadow: 0 0 32px rgba(255, 193, 7, 1), 0 0 16px rgba(255, 193, 7, 0.8);
+            }
+            100% {
+                box-shadow: 0 0 48px rgba(255, 193, 7, 1), 0 0 24px rgba(255, 193, 7, 0.8);
+            }
+        }
+
+        .keyframe-ghost {
+            position: absolute;
+            width: 14px;
+            height: 14px;
+            background: rgba(108, 92, 231, 0.2);
+            border: 2px dashed rgba(108, 92, 231, 0.4);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 5;
+            pointer-events: none;
+        }
+
+        .keyframe-drag-label {
+            position: fixed;
+            background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
+            color: #000;
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 700;
+            pointer-events: none;
+            z-index: 10000;
+            box-shadow: 0 4px 16px rgba(255, 193, 7, 0.6), 0 2px 8px rgba(0, 0, 0, 0.3);
+            white-space: nowrap;
+            border: 2px solid rgba(255, 255, 255, 0.9);
+        }
+
+        .keyframe-drag-label::before {
+            content: '🎯 Dragging to: ';
+            font-weight: 600;
+        }
+
+        .playhead {
+            position: absolute;
+            top: -5px; /* Extend above timeline-track to prevent clipping */
+            bottom: -5px; /* Extend below timeline-track */
+            width: 1px; /* Thin line for precise alignment */
+            background: #27ae60;
+            box-shadow: 0 0 8px rgba(39, 174, 96, 0.6);
+            cursor: ew-resize;
+            z-index: 10; /* Higher than timeline-keyframes (5) so it's always grabbable */
+            transition: box-shadow 0.2s;
+            pointer-events: none;
+            /* 1px wide, no offset needed */
+        }
+
+        .playhead:hover {
+            box-shadow: 0 0 16px rgba(39, 174, 96, 0.8);
+        }
+
+        .playhead::before {
+            content: '';
+            position: absolute;
+            top: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 8px solid transparent;
+            border-right: 8px solid transparent;
+            border-top: 10px solid #27ae60;
+            cursor: ew-resize;
+            pointer-events: auto;
+        }
+
+        .playhead-handle {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: auto;
+            width: 20px;
+            height: 40px;
+            background: rgba(39, 174, 96, 0.3);
+            border: 2px solid #27ae60;
+            border-radius: 4px;
+            cursor: ew-resize;
+            transition: all 0.2s;
+        }
+
+        .playhead:hover .playhead-handle {
+            background: rgba(39, 174, 96, 0.5);
+            width: 24px;
+            height: 44px;
+        }
+
+        .time-display {
+            font-size: 13px;
+            color: #b0b0b0;
+            min-width: 100px;
+            text-align: center;
+            font-family: 'Courier New', monospace;
+        }
+
+        /* Image Selection Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #1e1e32;
+            border-radius: 12px;
+            padding: 24px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 12px 48px rgba(0,0,0,0.6);
+        }
+
+        .modal-content h2 {
+            margin-bottom: 20px;
+            color: #6c5ce7;
+        }
+
+        /* Category Tabs */
+        .category-tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 16px 0;
+            padding-bottom: 12px;
+            border-bottom: 2px solid rgba(108, 92, 231, 0.3);
+        }
+
+        .category-tab {
+            background: rgba(255,255,255,0.05);
+            color: #b0b0b0;
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .category-tab:hover {
+            background: rgba(108, 92, 231, 0.2);
+            border-color: #6c5ce7;
+            color: #e0e0e0;
+        }
+
+        .category-tab.active {
+            background: #6c5ce7;
+            color: white;
+            border-color: #6c5ce7;
+            box-shadow: 0 2px 8px rgba(108, 92, 231, 0.4);
+        }
+
+        .image-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 12px;
+            margin: 20px 0;
+            max-height: 400px;
+            overflow-y: auto;
+            padding-right: 8px;
+        }
+
+        .image-option {
+            aspect-ratio: 1;
+            border: 2px solid rgba(255,255,255,0.2);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            overflow: hidden;
+            background: rgba(255,255,255,0.05);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .image-option:hover {
+            border-color: #6c5ce7;
+            transform: scale(1.05);
+            box-shadow: 0 4px 16px rgba(108, 92, 231, 0.4);
+        }
+
+        .image-option img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .divider {
+            margin: 20px 0;
+            text-align: center;
+            color: #888;
+            position: relative;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            width: 40%;
+            height: 1px;
+            background: rgba(255,255,255,0.2);
+        }
+
+        .divider::before { left: 0; }
+        .divider::after { right: 0; }
+
+        /* Toast notifications */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #27ae60;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 6px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.3s;
+            z-index: 2000;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .toast.error {
+            background: #e74c3c;
+        }
+
+        .toast.info {
+            background: #3498db;
+        }
+
+        /* Help Text */
+        .help-text {
+            font-size: 11px;
+            color: #888;
+            font-style: italic;
+            margin-top: 4px;
+        }
+
+        /* Prevent text selection during playhead dragging */
+        body.dragging-playhead {
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+        }
+
+        body.dragging-playhead * {
+            cursor: ew-resize !important;
+        }
+
+        /* Custom Scrollbars */
+        /* Webkit browsers (Chrome, Safari, Edge) */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #6c5ce7;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #5f4dd1;
+        }
+
+        ::-webkit-scrollbar-corner {
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        /* Firefox */
+        * {
+            scrollbar-width: thin;
+            scrollbar-color: #6c5ce7 rgba(0, 0, 0, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Top Toolbar -->
+        <div class="toolbar">
+            <div class="toolbar-section">
+                <span style="color: #6c5ce7; font-weight: 600; font-size: 16px;">🎬 Motion Maker</span>
+            </div>
+
+            <div class="toolbar-section">
+                <button class="btn secondary" onclick="undo()" id="undo-btn" title="Undo (Ctrl+Z)">
+                    <span>↶</span> Undo
+                </button>
+                <button class="btn secondary" onclick="redo()" id="redo-btn" title="Redo (Ctrl+Shift+Z)">
+                    <span>↷</span> Redo
+                </button>
+                <button class="btn secondary" onclick="showImageSelector()">
+                    <span>🖼️</span> Add Image
+                </button>
+                <button class="btn secondary" onclick="showExportModal()" id="export-btn" disabled>
+                    <span>🎬</span> Export
+                </button>
+                <span style="color: #e0e0e0; font-size: 16px; font-weight: 500; margin-left: auto;">
+                    Duration: <span id="duration-display" style="color: #6c5ce7; font-weight: 600;">0.0s</span>
+                </span>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="content">
+            <!-- Canvas -->
+            <div class="canvas-container">
+                <div id="p5-canvas"></div>
+            </div>
+
+            <!-- Properties Panel -->
+            <div class="properties-panel" id="properties-panel">
+                <div class="panel-resize-handle" id="panel-resize-handle"></div>
+                <div class="property-group">
+                    <h3>Layers</h3>
+                    <div class="layers-list" id="layers-list">
+                        <div style="text-align: center; color: #666; padding: 20px; font-size: 12px;">
+                            No layers yet.<br>Click "Add Image" to start!
+                        </div>
+                    </div>
+                </div>
+
+                <div class="property-group">
+                    <h3>Transform</h3>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px;">
+                        <div>
+                            <label style="display: block; margin-bottom: 4px; font-size: 11px;">X:</label>
+                            <input type="number" id="prop-x" value="400" oninput="updateSelectedLayer()" style="width: 100%;">
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 4px; font-size: 11px;">Y:</label>
+                            <input type="number" id="prop-y" value="300" oninput="updateSelectedLayer()" style="width: 100%;">
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px;">
+                        <div>
+                            <label style="display: block; margin-bottom: 4px; font-size: 11px;">Scale X:</label>
+                            <input type="number" id="prop-scale-x" value="1" step="0.1" min="0.1" max="5" oninput="updateSelectedLayer()" style="width: 100%;">
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 4px; font-size: 11px;">Scale Y:</label>
+                            <input type="number" id="prop-scale-y" value="1" step="0.1" min="0.1" max="5" oninput="updateSelectedLayer()" style="width: 100%;">
+                        </div>
+                    </div>
+                    <div class="property-row">
+                        <label style="font-size: 11px;">Rotation (°):</label>
+                        <input type="number" id="prop-rotation" value="0" min="-360" max="360" oninput="updateSelectedLayer()">
+                    </div>
+                    <div class="property-row">
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                            <input type="checkbox" id="prop-visible" checked onchange="updateSelectedLayer()" style="cursor: pointer; margin: 0; width: auto !important;">
+                            <span style="font-size: 11px;">Visible at keyframe</span>
+                        </label>
+                    </div>
+                    <div class="property-row">
+                        <label style="font-size: 11px;">Background Color:</label>
+                        <input type="color" id="prop-bg-color" value="#2c3e50" oninput="updateBackgroundColorKeyframe()" style="width: 100%; height: 40px; cursor: pointer;">
+                    </div>
+                </div>
+
+                <div class="property-group">
+                    <h3>Keyframe</h3>
+                    <div class="property-row">
+                        <label>Easing:</label>
+                        <select id="easing-function" onchange="updateKeyframeEasing()" style="width: 100%; padding: 6px; background: rgba(255,255,255,0.1); border: 1px solid #444; color: #e0e0e0; border-radius: 4px; cursor: pointer;">
+                            <option value="linear">Linear</option>
+                            <option value="easeInQuad">Ease In (Quad)</option>
+                            <option value="easeOutQuad">Ease Out (Quad)</option>
+                            <option value="easeInOutQuad">Ease In-Out (Quad)</option>
+                            <option value="easeInCubic">Ease In (Cubic)</option>
+                            <option value="easeOutCubic">Ease Out (Cubic)</option>
+                            <option value="easeInOutCubic">Ease In-Out (Cubic)</option>
+                            <option value="easeInQuart">Ease In (Quart)</option>
+                            <option value="easeOutQuart">Ease Out (Quart)</option>
+                            <option value="easeInOutQuart">Ease In-Out (Quart)</option>
+                            <option value="easeInBack">Ease In (Back)</option>
+                            <option value="easeOutBack">Ease Out (Back)</option>
+                            <option value="easeInOutBack">Ease In-Out (Back)</option>
+                            <option value="easeInElastic">Ease In (Elastic)</option>
+                            <option value="easeOutElastic">Ease Out (Elastic)</option>
+                            <option value="easeInOutElastic">Ease In-Out (Elastic)</option>
+                            <option value="easeOutBounce">Bounce</option>
+                        </select>
+                    </div>
+                    <button class="btn" style="width: 100%; margin-top: 8px;" onclick="addKeyframe()">
+                        <span>⭐</span> Add Keyframe
+                    </button>
+                    <button class="btn danger" style="width: 100%; margin-top: 8px;" onclick="deleteKeyframe()" id="delete-keyframe-btn" disabled>
+                        <span>🗑️</span> Delete Keyframe
+                    </button>
+                </div>
+
+                <div class="property-group">
+                    <h3>Background (Global Default)</h3>
+                    <div class="property-row">
+                        <label>Default Color:</label>
+                        <input type="color" id="bg-color" value="#2c3e50" oninput="updateBackgroundColor()" style="width: 100%; height: 40px; cursor: pointer;">
+                    </div>
+                    <p style="font-size: 11px; color: #888; margin: 5px 0 0 0;">This sets the default background. Use "Background Color (Keyframe)" above to animate it.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Timeline -->
+        <div class="timeline-container" id="timeline-container">
+            <div class="timeline-resize-handle" id="timeline-resize-handle"></div>
+            <div class="timeline-controls">
+                <button class="btn success" onclick="togglePlay()" id="play-btn">
+                    <span id="play-icon">▶️</span> Play
+                </button>
+                <button class="btn secondary" onclick="stopAnimation()">
+                    <span>⏹️</span> Stop
+                </button>
+                <label style="display: flex; align-items: center; gap: 6px; color: #b0b0b0; font-size: 13px; margin-left: 8px; cursor: pointer;">
+                    <input type="checkbox" id="loop-checkbox" checked style="cursor: pointer;">
+                    Loop
+                </label>
+                <label style="display: flex; align-items: center; gap: 6px; color: #b0b0b0; font-size: 13px; margin-left: 16px; cursor: pointer;" title="Eliminate slowdowns at keyframes for ultra-smooth animation">
+                    <input type="checkbox" id="smooth-playback-checkbox" style="cursor: pointer;">
+                    Smooth Playback
+                </label>
+                <label style="display: flex; align-items: center; gap: 6px; color: #b0b0b0; font-size: 13px; margin-left: 16px;" title="Playback speed">
+                    <span style="font-size: 11px;">Speed:</span>
+                    <select id="playback-speed" style="padding: 4px 8px; background: rgba(255,255,255,0.1); border: 1px solid #444; color: #e0e0e0; border-radius: 4px; font-size: 12px; cursor: pointer;">
+                        <option value="0.25">0.25x</option>
+                        <option value="0.5">0.5x</option>
+                        <option value="1" selected>1x</option>
+                        <option value="1.5">1.5x</option>
+                        <option value="2">2x</option>
+                    </select>
+                </label>
+                <label style="display: flex; align-items: center; gap: 6px; color: #b0b0b0; font-size: 13px; margin-left: 16px; cursor: pointer;" title="Show keyframes for all layers in timeline">
+                    <input type="checkbox" id="show-all-keyframes" onchange="toggleShowAllKeyframes()" style="cursor: pointer;">
+                    Show All Keyframes
+                </label>
+                <label style="display: flex; align-items: center; gap: 6px; color: #b0b0b0; font-size: 13px; margin-left: 16px; cursor: pointer;" title="Show previous/next keyframes with transparency">
+                    <input type="checkbox" id="onion-skin-enabled" style="cursor: pointer;">
+                    Onion Skin
+                </label>
+                <label style="display: flex; align-items: center; gap: 6px; color: #b0b0b0; font-size: 13px; margin-left: 8px;" title="Onion skin opacity">
+                    <span style="font-size: 11px;">Opacity:</span>
+                    <input type="range" id="onion-skin-opacity" min="10" max="80" value="30" step="5" oninput="updateOpacityDisplay()" style="width: 80px; cursor: pointer;">
+                    <span id="onion-opacity-value" style="font-size: 11px; min-width: 30px;">30%</span>
+                </label>
+                <label style="display: flex; align-items: center; gap: 6px; color: #b0b0b0; font-size: 13px; margin-left: 16px; cursor: pointer;" title="Show motion path between keyframes">
+                    <input type="checkbox" id="motion-trail-enabled" style="cursor: pointer;">
+                    Motion Trail
+                </label>
+                <div class="time-display" id="time-display">0.00s / 10.00s</div>
+            </div>
+
+            <div class="timeline-track" id="timeline-track">
+                <div class="timeline-grid" id="timeline-grid"></div>
+                <div class="timeline-ruler" id="timeline-ruler"></div>
+                <div class="background-keyframes-track" id="background-keyframes-track">
+                    <span class="bg-track-label">🎨 BG:</span>
+                </div>
+                <div class="timeline-labels" id="timeline-labels"></div>
+                <div class="timeline-keyframes" id="timeline-keyframes"></div>
+                <div class="playhead" id="playhead" onmousedown="startPlayheadDrag(event)">
+                    <div class="playhead-handle"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Image Selector Modal -->
+    <div class="modal" id="image-modal" onclick="closeModalOnBackdropClick(event, 'image-modal')">
+        <div class="modal-content">
+            <h2>Choose an Image</h2>
+
+            <div class="property-row">
+                <label>Custom Image URL:</label>
+                <input type="text" id="custom-image-url" placeholder="https://www.mytekos.com/file" style="width: 100%; margin-bottom: 12px;">
+            </div>
+
+            <div style="display: flex; gap: 8px; justify-content: flex-end; margin-bottom: 16px;">
+                <button class="btn secondary" onclick="closeImageSelector()">Cancel</button>
+                <button class="btn success" onclick="applyCustomImage()">Apply Custom URL</button>
+            </div>
+
+            <div class="divider">OR</div>
+
+            <h3 style="font-size: 14px; margin-bottom: 12px;">Browse by Category</h3>
+            <div class="category-tabs" id="category-tabs"></div>
+            <div class="image-grid" id="default-images"></div>
+        </div>
+    </div>
+
+    <!-- Export Modal -->
+    <div class="modal" id="export-modal" onclick="closeModalOnBackdropClick(event, 'export-modal')">
+        <div class="modal-content">
+            <h2>Export Animation</h2>
+
+            <div class="property-row">
+                <label>Export Format:</label>
+                <select id="export-format" onchange="updateExportOptions()" style="width: 100%; padding: 8px; background: rgba(255,255,255,0.1); border: 1px solid #444; color: #e0e0e0; border-radius: 4px;">
+                    <option value="mp4">MP4 Video (recommended - smooth playback)</option>
+                    <option value="gif">Animated GIF (universal compatibility)</option>
+                </select>
+            </div>
+
+            <div class="property-row" style="margin-top: 12px;">
+                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                    <input type="checkbox" id="export-loop-checkbox" checked style="cursor: pointer; margin: 0; width: auto !important;">
+                    <span>Loop animation</span>
+                </label>
+            </div>
+
+            <div class="property-row" style="margin-top: 12px;">
+                <label>Frame Rate (FPS):</label>
+                <select id="export-fps" style="width: 100%; padding: 8px; background: rgba(255,255,255,0.1); border: 1px solid #444; color: #e0e0e0; border-radius: 4px;">
+                    <option value="15">15 FPS</option>
+                    <option value="20">20 FPS</option>
+                    <option value="24">24 FPS</option>
+                    <option value="30" selected>30 FPS (recommended)</option>
+                </select>
+            </div>
+
+            <div id="format-info" style="margin-top: 12px; padding: 12px; background: rgba(108, 92, 231, 0.1); border-left: 3px solid #6c5ce7; border-radius: 4px; font-size: 12px; color: #b0b0b0;">
+                <strong style="color: #6c5ce7;">MP4 Video:</strong> Smooth playback from first frame, smaller file size, better quality. Works in most modern browsers and apps.
+            </div>
+
+            <div id="export-progress" style="display: none; margin-top: 16px;">
+                <div style="color: #6c5ce7; font-size: 14px; margin-bottom: 8px;">
+                    <span id="export-status">Preparing export...</span>
+                </div>
+                <div style="width: 100%; height: 8px; background: rgba(0,0,0,0.3); border-radius: 4px; overflow: hidden;">
+                    <div id="export-progress-bar" style="width: 0%; height: 100%; background: #6c5ce7; transition: width 0.3s;"></div>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px;">
+                <button class="btn secondary" onclick="closeExportModal()">Cancel</button>
+                <button class="btn success" onclick="startExport()" id="export-confirm-btn">Export MP4</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Embed Modal -->
+    <div class="modal" id="embed-modal" onclick="closeModalOnBackdropClick(event, 'embed-modal')">
+        <div class="modal-content">
+            <h2>Embed Animation</h2>
+            <p style="color: #b0b0b0; font-size: 13px; margin-bottom: 16px;">Copy and paste this code into your website to embed this animation. It will auto-play and loop.</p>
+
+            <div class="property-row">
+                <label>Embed Code:</label>
+                <textarea id="embed-code" readonly style="width: 100%; height: 120px; padding: 12px; background: rgba(0,0,0,0.3); border: 1px solid #444; color: #e0e0e0; border-radius: 4px; font-family: 'Courier New', monospace; font-size: 11px; resize: vertical;" onclick="this.select()"></textarea>
+            </div>
+
+            <div class="property-row" style="margin-top: 12px;">
+                <label>Width:</label>
+                <input type="number" id="embed-width" value="800" min="200" max="1920" step="10" onchange="updateEmbedCode()" style="width: 100%; padding: 8px; background: rgba(255,255,255,0.1); border: 1px solid #444; color: #e0e0e0; border-radius: 4px;">
+            </div>
+
+            <div class="property-row" style="margin-top: 12px;">
+                <label>Height:</label>
+                <input type="number" id="embed-height" value="600" min="150" max="1080" step="10" onchange="updateEmbedCode()" style="width: 100%; padding: 8px; background: rgba(255,255,255,0.1); border: 1px solid #444; color: #e0e0e0; border-radius: 4px;">
+            </div>
+
+            <div style="margin-top: 12px; padding: 12px; background: rgba(108, 92, 231, 0.1); border-left: 3px solid #6c5ce7; border-radius: 4px; font-size: 12px; color: #b0b0b0;">
+                <strong style="color: #6c5ce7;">Note:</strong> The embedded animation includes a "MotionMaker by mytekOS" watermark and will auto-play with looping enabled.
+            </div>
+
+            <div style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px;">
+                <button class="btn secondary" onclick="closeEmbedModal()">Close</button>
+                <button class="btn success" onclick="copyEmbedCode()">
+                    <span id="copy-embed-icon">📋</span> Copy Code
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // Global variables
+        // Animation data
+        let animationData = {
+            version: '1.0',
+            settings: {
+                duration: 0,
+                width: 800,
+                height: 600,
+                fps: 30,
+                backgroundColor: '#2c3e50'
+            },
+            layers: [],
+            backgroundKeyframes: [
+                { time: 0, color: '#2c3e50' }
+            ],
+            smoothPlayback: false
+        };
+
+        let currentTime = 0;
+        let isPlaying = false;
+        let isScrubbing = false;
+        let isUpdatingInputs = false; // Flag to prevent oninput handlers from firing during programmatic updates
+        let selectedLayerIndex = null;
+        let selectedKeyframeIndex = null;
+        let selectedBgKeyframeIndex = null; // Track selected background keyframe
+
+        // Clipboard for copy/paste keyframes
+        let copiedKeyframe = null;
+        let copiedFromLayerIndex = null;
+
+        // Undo/Redo system
+        const undoStack = [];
+        const redoStack = [];
+        const MAX_HISTORY = 50;
+        let isUndoRedoAction = false; // Prevent saving state during undo/redo
+
+        // Canvas interaction
+        let isDragging = false;
+        let isScaling = false;
+        let isRotating = false;
+        let dragOffsetX = 0;
+        let dragOffsetY = 0;
+        let activeHandle = null;
+
+        // Keyframe dragging in timeline
+        let isDraggingKeyframe = false;
+        let draggedKeyframeInfo = null; // { layerIndex, keyframeIndex, originalTime }
+        let keyframeDragStartX = 0;
+        let dragThreshold = 5; // Pixels before drag starts
+
+        // Store initial values for scaling
+        let scaleStartMouseX = 0;
+        let scaleStartMouseY = 0;
+        let scaleStartX = 0;
+        let scaleStartY = 0;
+        let scaleStartScaleX = 1;
+        let scaleStartScaleY = 1;
+        let rotateStartAngle = 0;
+        let rotateStartRotation = 0;
+        let rotatePreviousAngle = 0;
+        let rotateAccumulatedDelta = 0;
+        let scaleStartRotation = 0;
+
+        // Fixed logical canvas size - never changes
+        const CANVAS_WIDTH = 800;
+        const CANVAS_HEIGHT = 600;
+    </script>
+
+    <!-- MotionMaker Modules - Load in dependency order -->
+    <script src="js/ui-utils.js"></script>
+    <script src="js/interpolation.js"></script>
+    <script src="js/undo-redo.js"></script>
+    <script src="js/properties-panel.js"></script>
+    <script src="js/keyframe-manager.js"></script>
+    <script src="js/timeline-manager.js"></script>
+    <script src="js/layer-manager.js"></script>
+    <script src="js/playback-controls.js"></script>
+    <script src="js/animation-controls.js"></script>
+    <script src="js/core-animation.js"></script>
+    <script src="js/image-selector.js"></script>
+    <script src="js/project-manager.js"></script>
+    <script src="js/auto-save.js"></script>
+    <script src="js/export-manager.js"></script>
+    <script src="js/panel-resizer.js"></script>
+    <script src="js/keyboard-shortcuts.js"></script>
+    <script src="js/app-init.js"></script>
+</body>
+</html>
