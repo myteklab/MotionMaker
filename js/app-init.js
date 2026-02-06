@@ -11,6 +11,11 @@
  * - P5.js: loadImage()
  */
 
+        // Platform mode: no PHP-injected project ID
+        if (typeof currentProjectId === 'undefined') {
+            window.currentProjectId = null;
+        }
+
         // Initialize
         window.addEventListener('load', () => {
             // Load saved panel sizes
