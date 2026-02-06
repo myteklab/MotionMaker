@@ -1,57 +1,27 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
-  <defs>
-    <linearGradient id="iconGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#6c5ce7;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#a29bfe;stop-opacity:1" />
-    </linearGradient>
-    <linearGradient id="filmGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" style="stop-color:#34495e;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#2c3e50;stop-opacity:1" />
-    </linearGradient>
-  </defs>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <rect width="128" height="128" rx="16" fill="#1a1a2e"/>
 
-  <!-- Background circle -->
-  <circle cx="256" cy="256" r="240" fill="url(#iconGrad)"/>
+  <!-- Stage/canvas area -->
+  <rect x="12" y="12" width="104" height="78" rx="8" fill="#16213e"/>
 
-  <!-- Film strip frame -->
-  <rect x="140" y="140" width="232" height="232" rx="20" fill="url(#filmGrad)" stroke="#1a1a2e" stroke-width="8"/>
+  <!-- Bouncing ball animation trail -->
+  <circle cx="34" cy="64" r="9" fill="#6c5ce7" opacity="0.25"/>
+  <circle cx="56" cy="36" r="11" fill="#6c5ce7" opacity="0.5"/>
+  <circle cx="80" cy="56" r="11" fill="#6c5ce7" opacity="0.75"/>
+  <circle cx="100" cy="30" r="13" fill="#a29bfe"/>
 
-  <!-- Film perforations (top) -->
-  <rect x="150" y="150" width="20" height="15" rx="3" fill="#95a5a6"/>
-  <rect x="190" y="150" width="20" height="15" rx="3" fill="#95a5a6"/>
-  <rect x="230" y="150" width="20" height="15" rx="3" fill="#95a5a6"/>
-  <rect x="270" y="150" width="20" height="15" rx="3" fill="#95a5a6"/>
-  <rect x="310" y="150" width="20" height="15" rx="3" fill="#95a5a6"/>
-  <rect x="350" y="150" width="20" height="15" rx="3" fill="#95a5a6"/>
+  <!-- Motion arc (dotted path) -->
+  <path d="M 34 64 Q 46 18 56 36 Q 66 54 80 56 Q 90 58 100 30" fill="none" stroke="#a29bfe" stroke-width="1.5" stroke-dasharray="3,3" opacity="0.4"/>
 
-  <!-- Film perforations (bottom) -->
-  <rect x="150" y="347" width="20" height="15" rx="3" fill="#95a5a6"/>
-  <rect x="190" y="347" width="20" height="15" rx="3" fill="#95a5a6"/>
-  <rect x="230" y="347" width="20" height="15" rx="3" fill="#95a5a6"/>
-  <rect x="270" y="347" width="20" height="15" rx="3" fill="#95a5a6"/>
-  <rect x="310" y="347" width="20" height="15" rx="3" fill="#95a5a6"/>
-  <rect x="350" y="347" width="20" height="15" rx="3" fill="#95a5a6"/>
+  <!-- Timeline bar -->
+  <rect x="12" y="98" width="104" height="18" rx="9" fill="#16213e"/>
 
-  <!-- Center screen area -->
-  <rect x="165" y="180" width="182" height="152" rx="8" fill="#ecf0f1"/>
+  <!-- Timeline track -->
+  <rect x="18" y="104" width="92" height="6" rx="3" fill="#2c3e50"/>
 
-  <!-- Motion trail effect (3 circles getting more transparent) -->
-  <circle cx="200" cy="256" r="25" fill="#e74c3c" opacity="0.3"/>
-  <circle cx="230" cy="256" r="30" fill="#e74c3c" opacity="0.5"/>
-  <circle cx="270" cy="256" r="35" fill="#e74c3c" opacity="0.8"/>
-
-  <!-- Play button overlay -->
-  <circle cx="256" cy="256" r="50" fill="#27ae60" opacity="0.95"/>
-  <path d="M 240 236 L 240 276 L 280 256 Z" fill="#fff"/>
-
-  <!-- Motion lines (speed/movement effect) -->
-  <line x1="170" y1="220" x2="190" y2="220" stroke="#3498db" stroke-width="4" stroke-linecap="round" opacity="0.7"/>
-  <line x1="170" y1="240" x2="200" y2="240" stroke="#3498db" stroke-width="4" stroke-linecap="round" opacity="0.7"/>
-  <line x1="170" y1="260" x2="185" y2="260" stroke="#3498db" stroke-width="4" stroke-linecap="round" opacity="0.7"/>
-  <line x1="170" y1="280" x2="195" y2="280" stroke="#3498db" stroke-width="4" stroke-linecap="round" opacity="0.7"/>
-
-  <!-- Timeline indicator at bottom -->
-  <rect x="165" y="310" width="182" height="8" rx="4" fill="#bdc3c7"/>
-  <rect x="165" y="310" width="100" height="8" rx="4" fill="#6c5ce7"/>
-  <circle cx="265" cy="314" r="6" fill="#27ae60" stroke="#fff" stroke-width="2"/>
+  <!-- Keyframe diamonds -->
+  <rect x="26" y="103" width="8" height="8" rx="1.5" transform="rotate(45 30 107)" fill="#e74c3c"/>
+  <rect x="49" y="103" width="8" height="8" rx="1.5" transform="rotate(45 53 107)" fill="#f39c12"/>
+  <rect x="72" y="103" width="8" height="8" rx="1.5" transform="rotate(45 76 107)" fill="#2ecc71"/>
+  <rect x="95" y="103" width="8" height="8" rx="1.5" transform="rotate(45 99 107)" fill="#3498db"/>
 </svg>
