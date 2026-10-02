@@ -2,6 +2,8 @@
 
 A browser-based 2D animation tool for creating layered, keyframe-driven animations with real-time preview and export to GIF or MP4.
 
+**Try it in your browser, no account needed:** [mytekdev.com/tools/motionmaker](https://mytekdev.com/tools/motionmaker). The page has a live demo and explains what students learn from it.
+
 ![License: GPL-3.0](https://img.shields.io/badge/License-GPL--3.0-blue.svg)
 
 ## Features
